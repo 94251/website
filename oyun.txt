@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Matematik Yağmuru</title>
+  <style>
+    :root { --w: 900px; --h: 520px; }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:#bfe6ff; /* açık mavi */
+      color:#0b1220;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+    }
+
+    .wrap{ width: min(var(--w), 96vw); }
+
+    .hud{
+      display:flex;
+      gap:12px;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:10px;
+    }
+
+    .card{
+      background: rgba(255,255,255,0.65);
+      border: 1px solid rgba(0,0,0,0.10);
+      border-radius: 14px;
+      padding:10px 12px;
+      backdrop-filter: blur(6px);
+    }
+
+    .hint{ font-size:13px; opacity:.95; }
+
+    button{
+      border:1px solid rgba(0,0,0,0.15);
+      background: rgba(255,255,255,0.7);
+      color:#0b1220;
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      margin-left:6px;
+    }
+    button:hover{ background: rgba(255,255,255,0.85); }
+
+    /* Oyun alanı */
+    #game{
+      position:relative;
+      width: min(var(--w), 96vw);
+      height: min(var(--h), 60vh);
+      border:1px solid rgba(0,0,0,0.15);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 18px 55px rgba(0,0,0,0.18);
+
+      /* açık mavi gökyüzü gradyan */
+      background: linear-gradient(180deg, #bfe6ff 0%, #d7f1ff 55%, #eefaff 100%);
+    }
+
+    /* Kayan gökyüzü: bulut katmanları */
+    .cloud-layer{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      opacity:0.9;
+    }
+
+    .cloud{
+      position:absolute;
+      width: 180px;
+      height: 60px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 999px;
+      filter: blur(0.2px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      animation: drift linear infinite;
+    }
+    .cloud::before,
+    .cloud::after{
+      content:"";
+      position:absolute;
+      background: rgba(255,255,255,0.92);
+      border-radius:999px;
+    }
+    .cloud::before{
+      width:70px; height:70px;
+      left:25px; top:-30px;
+    }
+    .cloud::after{
+      width:90px; height:90px;
+      left:70px; top:-45px;
+    }
+
+    @keyframes drift{
+      from{ transform: translateX(-240px); }
+      to  { transform: translateX(calc(100% + 240px)); }
+    }
+
+    /* Karne (sol alt) */
+    #report{
+      position:absolute;
+      left:12px;
+      bottom:12px;
+      width: 230px;
+      background: rgba(255,255,255,0.75);
+      border:1px solid rgba(0,0,0,0.14);
+      border-radius:14px;
+      padding:10px;
+      z-index: 5;
+    }
+    #report h3{
+      margin:0 0 8px;
+      font-size:14px;
+      opacity:.95;
+    }
+    .row{
+      display:flex;
+      justify-content:space-between;
+      font-size:13px;
+    }
+    .bar{
+      margin-top:8px;
+      height:10px;
+      border-radius:999px;
+      background: rgba(0,0,0,0.10);
+      overflow:hidden;
+    }
+    .bar > div{
+      height:100%;
+      width:50%;
+      background: linear-gradient(90deg, #22c55e, #38bdf8);
+      border-radius:999px;
+      transition: width .15s linear;
+    }
+
+    /* Oyuncu */
+    #player{
+      position:absolute;
+      width:52px;
+      height:52px;
+      border-radius:14px;
+      background: rgba(255,255,255,0.35);
+      border:1px solid rgba(0,0,0,0.14);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      user-select:none;
+      z-index: 6;
+    }
+    #player img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    /* Düşen işlem */
+    .drop{
+      position:absolute;
+      padding:6px 10px;
+      border-radius:12px;
+      background: rgba(255,255,255,0.78);
+      border:1px solid rgba(0,0,0,0.12);
+      font-weight:800;
+      font-size:14px;
+      white-space:nowrap;
+      user-select:none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.14);
+      z-index: 4;
+    }
+    .drop.good{ outline: 2px solid rgba(34,197,94,0.40); }
+    .drop.bad { outline: 2px solid rgba(239,68,68,0.40); }
+
+    @media (max-width: 520px){
+      #report{ width:190px; }
+      .drop{ font-size:13px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="hud">
+      <div class="card hint">🎮 Yön tuşları ile hareket et. Doğru işlemleri topla! (Yanlış toplarsan not düşer.)</div>
+      <div class="card">
+        <button id="btnStart">Başlat</button>
+        <button id="btnPause">Duraklat</button>
+        <button id="btnReset">Sıfırla</button>
+      </div>
+    </div>
+
+    <div id="game" aria-label="Matematik oyunu alanı">
+      <!-- Bulutlar -->
+      <div class="cloud-layer" aria-hidden="true">
+        <div class="cloud" style="top:35px;  animation-duration: 28s; opacity:0.95;"></div>
+        <div class="cloud" style="top:95px;  animation-duration: 36s; opacity:0.75; transform: translateX(-120px);"></div>
+        <div class="cloud" style="top:160px; animation-duration: 42s; opacity:0.65; width:220px; height:70px; transform: translateX(-200px);"></div>
+        <div class="cloud" style="top:10px;  animation-duration: 52s; opacity:0.55; width:260px; height:78px; transform: translateX(-320px);"></div>
+      </div>
+
+      <!-- Oyuncu: kız.png aynı klasörde olmalı -->
+      <div id="player" aria-label="Kız karakter">
+        <img src="kız.png" alt="Kız karakter" />
+      </div>
+
+      <!-- Karne -->
+      <div id="report">
+        <h3>📄 Karne</h3>
+        <div class="row"><span>Matematik Notu</span><b id="gradeText">50</b></div>
+        <div class="bar"><div id="gradeBar"></div></div>
+        <div class="row" style="margin-top:8px;"><span>Doğru</span><b id="ok">0</b></div>
+        <div class="row"><span>Yanlış</span><b id="bad">0</b></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================= OYUN AYARLARI =================
+    const SPAWN_EVERY_MS = 900;   // işlemler ne sıklıkla düşsün
+    const FALL_SPEED_MIN = 90;    // px/s
+    const FALL_SPEED_MAX = 160;   // px/s
+    const PLAYER_SPEED   = 300;   // px/s
+
+    const GRADE_START = 50;
+    const GRADE_STEP  = 1;        // +1 / -1
+    const MAX_GRADE   = 100;
+    const MIN_GRADE   = 0;
+
+    // ============== SABİT İŞLEM LİSTELERİ ==============
+    const DOGRU_ISLEMLER = [
+      "3 + 4 = 7",
+      "6 + 5 = 11",
+      "8 + 2 = 10",
+      "9 + 6 = 15",
+      "7 + 7 = 14",
+      "10 − 3 = 7",
+      "12 − 5 = 7",
+      "15 − 6 = 9",
+      "18 − 9 = 9",
+      "14 − 8 = 6",
+      "2 × 3 = 6",
+      "4 × 5 = 20",
+      "6 × 2 = 12",
+      "3 × 7 = 21",
+      "5 × 4 = 20",
+      "8 ÷ 2 = 4",
+      "10 ÷ 5 = 2",
+      "12 ÷ 3 = 4",
+      "20 ÷ 4 = 5",
+      "18 ÷ 6 = 3",
+      "9 + 1 = 10",
+      "11 − 4 = 7",
+      "6 + 8 = 14",
+      "16 − 9 = 7",
+      "7 × 3 = 21"
+    ];
+
+    const YANLIS_ISLEMLER = [
+      "4 + 5 = 8",
+      "7 + 6 = 12",
+      "9 + 3 = 11",
+      "10 − 4 = 5",
+      "14 − 6 = 9",
+      "3 × 4 = 10",
+      "5 × 5 = 20",
+      "6 × 3 = 15",
+      "8 × 2 = 14",
+      "7 × 4 = 26",
+      "8 ÷ 2 = 5",
+      "12 ÷ 4 = 4",
+      "18 ÷ 3 = 5",
+      "20 ÷ 5 = 3",
+      "16 ÷ 4 = 5",
+      "6 + 7 = 12",
+      "15 − 7 = 9",
+      "11 − 3 = 9",
+      "9 + 2 = 10",
+      "4 × 6 = 22",
+      "10 ÷ 2 = 6",
+      "14 ÷ 7 = 3",
+      "6 + 5 = 10",
+      "13 − 6 = 8",
+      "3 × 5 = 12"
+    ];
+
+    // ================== DOM ==================
+    const gameEl   = document.getElementById("game");
+    const playerEl = document.getElementById("player");
+
+    const gradeText = document.getElementById("gradeText");
+    const gradeBar  = document.getElementById("gradeBar");
+    const okEl      = document.getEleme
