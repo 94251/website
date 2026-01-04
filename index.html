@@ -7,7 +7,6 @@
 
   <style>
     :root { --w: 900px; --h: 520px; }
-
     * { box-sizing: border-box; }
 
     body{
@@ -22,7 +21,7 @@
       overscroll-behavior: none;
       -webkit-user-select: none;
       user-select:none;
-      touch-action: none; /* önemli: mobilde kaydırma/zoom oyunu bozmasın */
+      touch-action: none;
     }
 
     .wrap{
@@ -53,7 +52,6 @@
       margin-left:6px;
       font-weight:800;
     }
-    button:hover{ background: rgba(255,255,255,0.95); }
 
     #game{
       position:relative;
@@ -64,14 +62,12 @@
       overflow:hidden;
       box-shadow: 0 18px 55px rgba(0,0,0,0.18);
       background: linear-gradient(180deg, #bfe6ff 0%, #d7f1ff 55%, #eefaff 100%);
-      touch-action: none; /* oyun alanında da */
+      touch-action: none;
     }
 
-    /* OYUN SÜRESİ (sol üst) */
     #gameTime{
       position:absolute;
-      top:12px;
-      left:12px;
+      top:12px; left:12px;
       z-index: 10;
       background: rgba(255,255,255,0.85);
       border:1px solid rgba(0,0,0,0.12);
@@ -82,7 +78,6 @@
       box-shadow: 0 12px 30px rgba(0,0,0,0.10);
     }
 
-    /* Bulutlar */
     .cloud-layer{ position:absolute; inset:0; pointer-events:none; z-index:1; opacity:0.95; }
     .cloud{
       position:absolute;
@@ -92,43 +87,22 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.08);
       animation: fallCloud linear infinite;
     }
-    .cloud::before, .cloud::after{
-      content:"";
-      position:absolute;
-      background: rgba(255,255,255,0.96);
-      border-radius:999px;
-    }
+    .cloud::before, .cloud::after{ content:""; position:absolute; background: rgba(255,255,255,0.96); border-radius:999px; }
     .cloud::before{ width:75px; height:75px; left:25px; top:-32px; }
     .cloud::after { width:95px; height:95px; left:78px; top:-48px; }
+    @keyframes fallCloud{ from{ top:-140px; } to{ top: calc(100% + 140px); } }
 
-    @keyframes fallCloud{
-      from{ top:-140px; }
-      to  { top: calc(100% + 140px); }
-    }
-
-    /* BONUS: ekran ışığı */
     #game::after{
       content:"";
-      position:absolute;
-      inset:0;
+      position:absolute; inset:0;
       background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 60%);
-      opacity:0;
-      pointer-events:none;
-      z-index: 2;
+      opacity:0; pointer-events:none; z-index: 2;
     }
-    #game.bonus::after{
-      animation: glow 0.6s ease-in-out infinite alternate;
-    }
-    @keyframes glow{
-      from{ opacity: 0.10; }
-      to  { opacity: 0.55; }
-    }
+    #game.bonus::after{ animation: glow 0.6s ease-in-out infinite alternate; }
+    @keyframes glow{ from{opacity:.10;} to{opacity:.55;} }
 
-    /* Bonus banner */
     #banner{
-      position:absolute;
-      top:14px;
-      left:50%;
+      position:absolute; top:14px; left:50%;
       transform:translateX(-50%);
       width:min(700px, calc(100% - 24px));
       background: rgba(255,255,255,0.92);
@@ -141,41 +115,24 @@
       display:none;
       box-shadow: 0 12px 30px rgba(0,0,0,0.12);
     }
-    #banner small{
-      display:block;
-      margin-top:4px;
-      font-weight:700;
-      opacity:.85;
-    }
+    #banner small{ display:block; margin-top:4px; font-weight:700; opacity:.85; }
 
-    /* BONUS sayaç (sağ üst) */
     #bonusTimer{
-      position:absolute;
-      top:12px;
-      right:12px;
+      position:absolute; top:12px; right:12px;
       z-index: 12;
       display:none;
-      align-items:center;
-      justify-content:center;
-      width: 90px;
-      height: 54px;
+      align-items:center; justify-content:center;
+      width: 90px; height: 54px;
       border-radius: 16px;
       background: rgba(255,255,255,0.85);
       border:1px solid rgba(0,0,0,0.12);
       box-shadow: 0 12px 30px rgba(0,0,0,0.12);
-      font-weight:1000;
-      font-size: 22px;
-      letter-spacing: .5px;
+      font-weight:1000; font-size: 22px; letter-spacing: .5px;
     }
     #bonusTimer.pulse{ animation: pulse 0.65s ease-in-out infinite; }
-    @keyframes pulse{
-      0%   { transform: scale(1); }
-      40%  { transform: scale(1.14); }
-      100% { transform: scale(1); }
-    }
+    @keyframes pulse{ 0%{transform:scale(1)} 40%{transform:scale(1.14)} 100%{transform:scale(1)} }
     #bonusTimer span{ display:inline-block; min-width:2ch; text-align:center; }
 
-    /* Karne (sol alt) */
     #report{
       position:absolute; left:12px; bottom:12px;
       width: 230px;
@@ -188,14 +145,8 @@
     #report h3{ margin:0 0 8px; font-size:14px; opacity:.95; }
     .row{ display:flex; justify-content:space-between; font-size:13px; }
     .bar{ margin-top:8px; height:10px; border-radius:999px; background: rgba(0,0,0,0.10); overflow:hidden; }
-    .bar > div{
-      height:100%; width:50%;
-      background: linear-gradient(90deg, #22c55e, #38bdf8);
-      border-radius:999px;
-      transition: width .15s linear;
-    }
+    .bar > div{ height:100%; width:50%; background: linear-gradient(90deg, #22c55e, #38bdf8); border-radius:999px; transition: width .15s linear; }
 
-    /* Oyuncu */
     #player{
       position:absolute;
       width:52px; height:52px;
@@ -209,7 +160,6 @@
     }
     #player img{ width:100%; height:100%; object-fit:contain; pointer-events:none; }
 
-    /* Düşen işlem */
     .drop{
       position:absolute;
       padding:6px 10px;
@@ -232,13 +182,9 @@
       z-index: 8;
     }
 
-    /* Oyun bitti overlay */
     #gameOver{
-      position:absolute;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
+      position:absolute; inset:0;
+      display:none; align-items:center; justify-content:center;
       z-index: 50;
       background: rgba(10, 20, 35, 0.25);
       backdrop-filter: blur(3px);
@@ -255,21 +201,11 @@
       opacity: 0;
       animation: popIn 420ms ease-out forwards;
     }
-    @keyframes popIn{
-      to{ transform: scale(1.02); opacity: 1; }
-    }
-    #gameOver h2{
-      margin: 0 0 8px;
-      font-size: 22px;
-      font-weight: 1000;
-    }
-    #gameOver p{
-      margin: 0 0 12px;
-      font-weight: 800;
-      opacity: .9;
-    }
+    @keyframes popIn{ to{ transform: scale(1.02); opacity: 1; } }
+    #gameOver h2{ margin:0 0 8px; font-size: 22px; font-weight: 1000; }
+    #gameOver p{ margin:0 0 12px; font-weight: 800; opacity: .9; }
     #finalReport{
-      margin: 0 auto;
+      margin:0 auto;
       width: min(340px, 92%);
       background: rgba(255,255,255,0.95);
       border:1px solid rgba(0,0,0,0.14);
@@ -280,46 +216,38 @@
       animation: grow 520ms ease-out 120ms forwards;
       opacity: 0;
     }
-    @keyframes grow{
-      to{ transform: scale(1.08); opacity: 1; }
-    }
+    @keyframes grow{ to{ transform: scale(1.08); opacity: 1; } }
     #finalReport h3{ margin:0 0 8px; font-size:15px; }
     #finalReport .row{ font-size:14px; }
 
-    /* MOBİL KONTROL (D-PAD) */
+    /* MOBİL D-PAD */
     #dpad{
       position:absolute;
       left: 12px;
       bottom: 12px;
       z-index: 30;
-      display:none; /* sadece mobilde açacağız */
+      display:none;
       width: 150px;
       height: 150px;
       pointer-events: auto;
     }
     .padbtn{
       position:absolute;
-      width: 52px;
-      height: 52px;
+      width: 52px; height: 52px;
       border-radius: 16px;
       border: 1px solid rgba(0,0,0,0.14);
       background: rgba(255,255,255,0.75);
       box-shadow: 0 10px 25px rgba(0,0,0,0.10);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size: 20px;
-      font-weight: 900;
+      display:flex; align-items:center; justify-content:center;
+      font-size: 20px; font-weight: 900;
       touch-action: none;
       -webkit-tap-highlight-color: transparent;
     }
-    .padbtn:active{ transform: scale(0.96); }
     #upBtn   { left: 49px; top: 0px; }
     #downBtn { left: 49px; top: 98px; }
     #leftBtn { left: 0px;  top: 49px; }
     #rightBtn{ left: 98px; top: 49px; }
 
-    /* küçük ekranlarda karne biraz küçülsün */
     @media (max-width: 520px){
       #report{ width: 200px; }
       .drop{ font-size: 13px; }
@@ -343,7 +271,6 @@
       <div id="banner"></div>
       <div id="bonusTimer"><span id="bonusSec">20</span>s</div>
 
-      <!-- Mobil D-pad -->
       <div id="dpad" aria-label="Mobil yön tuşları">
         <div id="upBtn" class="padbtn">▲</div>
         <div id="downBtn" class="padbtn">▼</div>
@@ -384,7 +311,6 @@
         </div>
       </div>
 
-      <!-- Sesler -->
       <audio id="bgm" src="music.mp3" loop preload="auto"></audio>
       <audio id="sfxOk" src="ses.mp3" preload="auto"></audio>
       <audio id="sfxNo" src="no.mp3" preload="auto"></audio>
@@ -392,7 +318,7 @@
   </div>
 
   <script>
-    // ================== AYARLAR ==================
+    // ===== AYARLAR =====
     const MAX_ON_SCREEN   = 3;
     const SPAWN_EVERY_MS  = 1000;
     const FALL_SPEED_MIN  = 40;
@@ -404,7 +330,7 @@
     const MAX_GRADE   = 100;
     const MIN_GRADE   = 0;
 
-    const GAME_DURATION_MS = 3 * 60 * 1000; // 3 dakika
+    const GAME_DURATION_MS = 3 * 60 * 1000;
 
     // BONUS
     const BONUS_DURATION_MS = 20000;
@@ -412,7 +338,7 @@
     let nextBonusAt = 5;
     let nextBonusIncrement = 10;
 
-    // ================== LISTELER ==================
+    // ===== LISTELER =====
     const DOGRU_ISLEMLER = [
       "3 + 4 = 7","6 + 5 = 11","8 + 2 = 10","9 + 6 = 15","7 + 7 = 14",
       "10 − 3 = 7","12 − 5 = 7","15 − 6 = 9","18 − 9 = 9","14 − 8 = 6",
@@ -428,7 +354,7 @@
       "10 ÷ 2 = 6","14 ÷ 7 = 3","6 + 5 = 10","13 − 6 = 8","3 × 5 = 12"
     ];
 
-    // ================== DOM ==================
+    // ===== DOM =====
     const gameEl   = document.getElementById("game");
     const bannerEl = document.getElementById("banner");
     const playerEl = document.getElementById("player");
@@ -457,14 +383,14 @@
     const btnPause = document.getElementById("btnPause");
     const btnReset = document.getElementById("btnReset");
 
-    // Mobil d-pad
+    // D-pad
     const dpad = document.getElementById("dpad");
     const upBtn = document.getElementById("upBtn");
     const downBtn = document.getElementById("downBtn");
     const leftBtn = document.getElementById("leftBtn");
     const rightBtn = document.getElementById("rightBtn");
 
-    // ================== DURUM ==================
+    // ===== DURUM =====
     let running = false;
     let lastTs = 0;
     let spawnAcc = 0;
@@ -482,10 +408,14 @@
     /** @type {{el:HTMLElement,x:number,y:number,w:number,h:number,speed:number,isCorrect:boolean}[]} */
     let drops = [];
 
-    // Klavye ve mobil aynı havuza yazsın diye:
+    // Klavye + D-pad
     const keys = new Set();
 
-    // ================== UTIL ==================
+    // === Dokunulan yere yürüme ===
+    let touchMoveActive = false;
+    let targetX = 0, targetY = 0;
+
+    // ===== UTIL =====
     const clamp = (n,a,b)=> Math.max(a, Math.min(b,n));
     const rand  = (a,b)=> Math.random()*(b-a)+a;
     const W = ()=> gameEl.clientWidth;
@@ -509,21 +439,16 @@
     }
 
     async function playSfx(audioEl){
-      try{
-        audioEl.currentTime = 0;
-        await audioEl.play();
-      }catch(e){}
+      try{ audioEl.currentTime = 0; await audioEl.play(); }catch(e){}
     }
 
     function showBanner(html, ms=3200){
       bannerEl.innerHTML = html;
       bannerEl.style.display = "block";
-      if(ms > 0){
-        setTimeout(() => { bannerEl.style.display = "none"; }, ms);
-      }
+      if(ms > 0) setTimeout(() => { bannerEl.style.display = "none"; }, ms);
     }
 
-    // ================== BONUS ==================
+    // ===== BONUS =====
     function startBonus(now){
       bonusActive = true;
       bonusUntil = now + BONUS_DURATION_MS;
@@ -574,7 +499,7 @@
       }
     }
 
-    // ================== OYUN SÜRESİ ==================
+    // ===== OYUN SÜRESİ =====
     function startGameTimer(now){
       gameEndTs = now + GAME_DURATION_MS;
       lastShownGameSec = -1;
@@ -591,7 +516,7 @@
       }
     }
 
-    // ================== DROP ==================
+    // ===== DROP =====
     function spawnDrop(){
       const isCorrect = Math.random() < 0.5;
       const text = isCorrect
@@ -622,18 +547,17 @@
       drops = [];
     }
 
-    // ================== INPUT (Klavye) ==================
+    // ===== INPUT (Klavye) =====
     window.addEventListener("keydown", (e)=>{
       if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) e.preventDefault();
       keys.add(e.key);
     }, {passive:false});
     window.addEventListener("keyup", (e)=> keys.delete(e.key));
 
-    // ================== INPUT (Mobil D-pad) ==================
+    // ===== INPUT (D-pad) =====
     function bindHold(btn, keyName){
       const down = (e)=>{ e.preventDefault(); keys.add(keyName); };
       const up   = (e)=>{ e.preventDefault(); keys.delete(keyName); };
-
       btn.addEventListener("pointerdown", down);
       btn.addEventListener("pointerup", up);
       btn.addEventListener("pointercancel", up);
@@ -644,7 +568,6 @@
     bindHold(leftBtn, "ArrowLeft");
     bindHold(rightBtn, "ArrowRight");
 
-    // Mobilde d-pad göster
     function isTouchDevice(){
       return ("ontouchstart" in window) || (navigator.maxTouchPoints > 0);
     }
@@ -654,20 +577,89 @@
     updateDpadVisibility();
     window.addEventListener("resize", updateDpadVisibility);
 
+    // ===== Dokunulan yere yürütme =====
+    function setTargetFromEvent(e){
+      const rect = gameEl.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      // hedef: oyuncunun merkezi o noktaya gitsin
+      targetX = clamp(cx, 0, W());
+      targetY = clamp(cy, 0, H());
+    }
+
+    // D-pad’e basınca hedef yürümeyi kapat (karışmasın)
+    function anyArrowPressed(){
+      return keys.has("ArrowUp") || keys.has("ArrowDown") || keys.has("ArrowLeft") || keys.has("ArrowRight");
+    }
+
+    gameEl.addEventListener("pointerdown", (e)=>{
+      // D-pad alanına basıldıysa hedef yürüme başlatma
+      if(e.target && e.target.classList && e.target.classList.contains("padbtn")) return;
+
+      e.preventDefault();
+      touchMoveActive = true;
+      setTargetFromEvent(e);
+      gameEl.setPointerCapture(e.pointerId);
+    });
+
+    gameEl.addEventListener("pointermove", (e)=>{
+      if(!touchMoveActive) return;
+      if(anyArrowPressed()) return; // D-pad/klavye varken hedef yürütme devre dışı
+      e.preventDefault();
+      setTargetFromEvent(e);
+    });
+
+    gameEl.addEventListener("pointerup", (e)=>{
+      if(!touchMoveActive) return;
+      e.preventDefault();
+      touchMoveActive = false;
+    });
+
+    gameEl.addEventListener("pointercancel", ()=>{ touchMoveActive = false; });
+
+    // ===== Hareket Kararı =====
     function readInput(){
+      // Öncelik: ok tuşları / D-pad
       vx = 0; vy = 0;
+
       if(keys.has("ArrowLeft"))  vx -= 1;
       if(keys.has("ArrowRight")) vx += 1;
       if(keys.has("ArrowUp"))    vy -= 1;
       if(keys.has("ArrowDown"))  vy += 1;
 
-      if(vx !== 0 && vy !== 0){
-        const inv = 1/Math.sqrt(2);
-        vx *= inv; vy *= inv;
+      if(vx !== 0 || vy !== 0){
+        // çapraz normalize
+        if(vx !== 0 && vy !== 0){
+          const inv = 1/Math.sqrt(2);
+          vx *= inv; vy *= inv;
+        }
+        return;
+      }
+
+      // Ok tuşu yoksa: dokunulan hedefe yürü
+      if(touchMoveActive){
+        const pw = playerEl.offsetWidth;
+        const ph = playerEl.offsetHeight;
+        const centerX = px + pw/2;
+        const centerY = py + ph/2;
+
+        const dx = targetX - centerX;
+        const dy = targetY - centerY;
+
+        const dist = Math.hypot(dx, dy);
+
+        // hedefe yaklaştıysa dur
+        if(dist < 6){
+          vx = 0; vy = 0;
+          return;
+        }
+
+        vx = dx / dist;
+        vy = dy / dist;
       }
     }
 
-    // ================== OYUN BİTİR ==================
+    // ===== OYUN BİTİR =====
     function endGame(){
       running = false;
       lastTs = 0;
@@ -685,7 +677,7 @@
       statusEl.textContent = "Durum: Oyun bitti";
     }
 
-    // ================== LOOP ==================
+    // ===== LOOP =====
     function loop(ts){
       if(!running) return;
 
@@ -755,7 +747,7 @@
       requestAnimationFrame(loop);
     }
 
-    // ================== BUTTONS ==================
+    // ===== BUTTONS =====
     async function start(){
       if(running) return;
 
@@ -781,8 +773,9 @@
       lastTs = 0;
       statusEl.textContent = "Durum: Duraklatıldı";
       bgm.pause();
-      // mobilde basılı tuş kalmasın
+
       keys.delete("ArrowUp"); keys.delete("ArrowDown"); keys.delete("ArrowLeft"); keys.delete("ArrowRight");
+      touchMoveActive = false;
     }
 
     function reset(){
@@ -825,7 +818,7 @@
     btnPause.addEventListener("click", pause);
     btnReset.addEventListener("click", reset);
 
-    // iOS Safari: çift tık zoom engelle
+    // iOS çift tık zoom engeli
     let lastTouchEnd = 0;
     document.addEventListener("touchend", (e) => {
       const now = Date.now();
@@ -833,7 +826,6 @@
       lastTouchEnd = now;
     }, { passive: false });
 
-    // İlk kurulum
     requestAnimationFrame(() => { reset(); });
   </script>
 </body>
