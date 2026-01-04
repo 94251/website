@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Matematik Yağmuru</title>
+
+  <style>
+    :root { --w: 900px; --h: 520px; }
+
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:#bfe6ff;
+      color:#0b1220;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+    }
+    .wrap{ width:min(var(--w), 96vw); }
+
+    .hud{
+      display:flex; gap:12px;
+      justify-content:flex-end; align-items:center;
+      margin-bottom:10px;
+    }
+    .card{
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(0,0,0,0.10);
+      border-radius: 14px;
+      padding:10px 12px;
+      backdrop-filter: blur(6px);
+    }
+    button{
+      border:1px solid rgba(0,0,0,0.15);
+      background: rgba(255,255,255,0.80);
+      color:#0b1220;
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      margin-left:6px;
+    }
+    button:hover{ background: rgba(255,255,255,0.95); }
+
+    #game{
+      position:relative;
+      width: min(var(--w), 96vw);
+      height: min(var(--h), 60vh);
+      border:1px solid rgba(0,0,0,0.15);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow: 0 18px 55px rgba(0,0,0,0.18);
+      background: linear-gradient(180deg, #bfe6ff 0%, #d7f1ff 55%, #eefaff 100%);
+    }
+
+    /* OYUN SÜRESİ (sol üst) */
+    #gameTime{
+      position:absolute;
+      top:12px;
+      left:12px;
+      z-index: 10;
+      background: rgba(255,255,255,0.85);
+      border:1px solid rgba(0,0,0,0.12);
+      border-radius: 14px;
+      padding:8px 10px;
+      font-weight:900;
+      font-size: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.10);
+      user-select:none;
+    }
+
+    /* Bulutlar: yukarıdan aşağı */
+    .cloud-layer{ position:absolute; inset:0; pointer-events:none; z-index:1; opacity:0.95; }
+    .cloud{
+      position:absolute;
+      width: 220px; height: 70px;
+      background: rgba(255,255,255,0.92);
+      border-radius: 999px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      animation: fallCloud linear infinite;
+    }
+    .cloud::before, .cloud::after{
+      content:"";
+      position:absolute;
+      background: rgba(255,255,255,0.96);
+      border-radius:999px;
+    }
+    .cloud::before{ width:75px; height:75px; left:25px; top:-32px; }
+    .cloud::after { width:95px; height:95px; left:78px; top:-48px; }
+
+    @keyframes fallCloud{
+      from{ top:-140px; }
+      to  { top: calc(100% + 140px); }
+    }
+
+    /* BONUS: ekran ışığı yanıp sönsün */
+    #game::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.55), rgba(255,255,255,0.0) 60%);
+      opacity:0;
+      pointer-events:none;
+      z-index: 2;
+    }
+    #game.bonus::after{
+      animation: glow 0.6s ease-in-out infinite alternate;
+    }
+    @keyframes glow{
+      from{ opacity: 0.10; }
+      to  { opacity: 0.55; }
+    }
+
+    /* Bonus yazısı (üst-orta) */
+    #banner{
+      position:absolute;
+      top:14px;
+      left:50%;
+      transform:translateX(-50%);
+      width:min(700px, calc(100% - 24px));
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 14px;
+      padding:10px 12px;
+      text-align:center;
+      font-weight:900;
+      z-index: 11;
+      display:none;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    }
+    #banner small{
+      display:block;
+      margin-top:4px;
+      font-weight:700;
+      opacity:.85;
+    }
+
+    /* BONUS sayaç (sağ üst) - kalp atışı devam */
+    #bonusTimer{
+      position:absolute;
+      top:12px;
+      right:12px;
+      z-index: 12;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      width: 90px;
+      height: 54px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.85);
+      border:1px solid rgba(0,0,0,0.12);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+      font-weight:1000;
+      font-size: 22px;
+      letter-spacing: .5px;
+      user-select:none;
+    }
+    #bonusTimer.pulse{ animation: pulse 0.65s ease-in-out infinite; }
+    @keyframes pulse{
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.14); }
+      100% { transform: scale(1); }
+    }
+    #bonusTimer span{ display:inline-block; min-width:2ch; text-align:center; }
+
+    /* Karne (sol alt) */
+    #report{
+      position:absolute; left:12px; bottom:12px;
+      width: 230px;
+      background: rgba(255,255,255,0.82);
+      border:1px solid rgba(0,0,0,0.14);
+      border-radius:14px;
+      padding:10px;
+      z-index: 6;
+      user-select:none;
+    }
+    #report h3{ margin:0 0 8px; font-size:14px; opacity:.95; }
+    .row{ display:flex; justify-content:space-between; font-size:13px; }
+    .bar{ margin-top:8px; height:10px; border-radius:999px; background: rgba(0,0,0,0.10); overflow:hidden; }
+    .bar > div{
+      height:100%; width:50%;
+      background: linear-gradient(90deg, #22c55e, #38bdf8);
+      border-radius:999px;
+      transition: width .15s linear;
+    }
+
+    /* Oyuncu */
+    #player{
+      position:absolute;
+      width:52px; height:52px;
+      border-radius:14px;
+      background: rgba(255,255,255,0.35);
+      border:1px solid rgba(0,0,0,0.14);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+      user-select:none;
+      z-index: 7;
+    }
+    #player img{ width:100%; height:100%; object-fit:contain; pointer-events:none; user-select:none; }
+
+    /* Düşen işlem */
+    .drop{
+      position:absolute;
+      padding:6px 10px;
+      border-radius:12px;
+      background: rgba(255,255,255,0.86);
+      border:1px solid rgba(0,0,0,0.12);
+      font-weight:900;
+      font-size:14px;
+      white-space:nowrap;
+      user-select:none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.14);
+      z-index: 5;
+    }
+
+    #status{
+      position:absolute; right:12px; bottom:12px;
+      font-size:12px; opacity:.75;
+      background: rgba(255,255,255,0.65);
+      border:1px solid rgba(0,0,0,0.10);
+      padding:6px 8px; border-radius:10px;
+      z-index: 8;
+      user-select:none;
+    }
+
+    /* Oyun bitti ekranı */
+    #gameOver{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 50;
+      background: rgba(10, 20, 35, 0.25);
+      backdrop-filter: blur(3px);
+    }
+    #gameOver .panel{
+      width:min(720px, calc(100% - 28px));
+      background: rgba(255,255,255,0.92);
+      border:1px solid rgba(0,0,0,0.12);
+      border-radius: 18px;
+      padding:16px;
+      box-shadow: 0 20px 70px rgba(0,0,0,0.18);
+      text-align:center;
+      transform: scale(0.92);
+      opacity: 0;
+      animation: popIn 420ms ease-out forwards;
+    }
+    @keyframes popIn{
+      to{ transform: scale(1.02); opacity: 1; }
+    }
+    #gameOver h2{
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 1000;
+    }
+    #gameOver p{
+      margin: 0 0 12px;
+      font-weight: 800;
+      opacity: .9;
+    }
+    /* Ortadaki karne (büyüsün) */
+    #finalReport{
+      margin: 0 auto;
+      width: min(340px, 92%);
+      background: rgba(255,255,255,0.95);
+      border:1px solid rgba(0,0,0,0.14);
+      border-radius:16px;
+      padding:12px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.12);
+      transform: scale(0.92);
+      animation: grow 520ms ease-out 120ms forwards;
+      opacity: 0;
+    }
+    @keyframes grow{
+      to{ transform: scale(1.08); opacity: 1; }
+    }
+    #finalReport h3{ margin:0 0 8px; font-size:15px; }
+    #finalReport .row{ font-size:14px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="hud">
+      <div class="card">
+        <button id="btnStart" type="button">Başlat</button>
+        <button id="btnPause" type="button">Duraklat</button>
+        <button id="btnReset" type="button">Sıfırla</button>
+      </div>
+    </div>
+
+    <div id="game">
+      <div id="gameTime">Süre: 03:00</div>
+      <div id="banner"></div>
+      <div id="bonusTimer" aria-label="Bonus sayacı"><span id="bonusSec">20</span>s</div>
+
+      <div class="cloud-layer" aria-hidden="true">
+        <div class="cloud" style="left: 6%;  animation-duration: 18s; animation-delay:-3s;"></div>
+        <div class="cloud" style="left: 28%; animation-duration: 24s; opacity:0.78; width:260px; height:80px; animation-delay:-12s;"></div>
+        <div class="cloud" style="left: 55%; animation-duration: 30s; opacity:0.62; width:300px; height:90px; animation-delay:-20s;"></div>
+        <div class="cloud" style="left: 78%; animation-duration: 36s; opacity:0.50; width:330px; height:95px; animation-delay:-28s;"></div>
+      </div>
+
+      <div id="player" aria-label="Kız karakter">
+        <img src="kiz.png" alt="Kız karakter">
+      </div>
+
+      <div id="report">
+        <h3>📄 Karne</h3>
+        <div class="row"><span>Matematik Notu</span><b id="gradeText">50</b></div>
+        <div class="bar"><div id="gradeBar"></div></div>
+        <div class="row" style="margin-top:8px;"><span>Doğru</span><b id="ok">0</b></div>
+        <div class="row"><span>Yanlış</span><b id="bad">0</b></div>
+      </div>
+
+      <div id="status">Durum: Hazır</div>
+
+      <!-- Oyun bitti overlay -->
+      <div id="gameOver">
+        <div class="panel">
+          <h2>🎉 Tebrikler, oyun bitti!</h2>
+          <p>Karnenizdeki matematik puanını şöyle:</p>
+
+          <div id="finalReport">
+            <h3>📄 Karne</h3>
+            <div class="row"><span>Matematik Notu</span><b id="finalGrade">50</b></div>
+            <div class="bar"><div id="finalBar"></div></div>
+            <div class="row" style="margin-top:8px;"><span>Doğru</span><b id="finalOk">0</b></div>
+            <div class="row"><span>Yanlış</span><b id="finalBad">0</b></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sesler -->
+      <audio id="bgm" src="music.mp3" loop preload="auto"></audio>
+      <audio id="sfxOk" src="ses.mp3" preload="auto"></audio>
+      <audio id="sfxNo" src="no.mp3" preload="auto"></audio>
+    </div>
+  </div>
+
+  <script>
+    // ================== AYARLAR ==================
+    const MAX_ON_SCREEN   = 3;
+    const SPAWN_EVERY_MS  = 1000;
+    const FALL_SPEED_MIN  = 40;
+    const FALL_SPEED_MAX  = 80;
+    const PLAYER_SPEED    = 320;
+
+    const GRADE_START = 50;
+    const GRADE_STEP  = 1;
+    const MAX_GRADE   = 100;
+    const MIN_GRADE   = 0;
+
+    // Oyun süresi: 3 dakika
+    const GAME_DURATION_MS = 3 * 60 * 1000; // 180000
+
+    // BONUS
+    const BONUS_DURATION_MS = 20000;
+    const BONUS_MULTIPLIER = 2;
+
+    // Bonus eşikleri: 5, sonra +10, sonra +15, sonra +20...
+    let nextBonusAt = 5;
+    let nextBonusIncrement = 10;
+
+    // ================== SABİT LİSTELER ==================
+    const DOGRU_ISLEMLER = [
+      "3 + 4 = 7","6 + 5 = 11","8 + 2 = 10","9 + 6 = 15","7 + 7 = 14",
+      "10 − 3 = 7","12 − 5 = 7","15 − 6 = 9","18 − 9 = 9","14 − 8 = 6",
+      "2 × 3 = 6","4 × 5 = 20","6 × 2 = 12","3 × 7 = 21","5 × 4 = 20",
+      "8 ÷ 2 = 4","10 ÷ 5 = 2","12 ÷ 3 = 4","20 ÷ 4 = 5","18 ÷ 6 = 3",
+      "9 + 1 = 10","11 − 4 = 7","6 + 8 = 14","16 − 9 = 7","7 × 3 = 21"
+    ];
+    const YANLIS_ISLEMLER = [
+      "4 + 5 = 8","7 + 6 = 12","9 + 3 = 11","10 − 4 = 5","14 − 6 = 9",
+      "3 × 4 = 10","5 × 5 = 20","6 × 3 = 15","8 × 2 = 14","7 × 4 = 26",
+      "8 ÷ 2 = 5","12 ÷ 4 = 4","18 ÷ 3 = 5","20 ÷ 5 = 3","16 ÷ 4 = 5",
+      "6 + 7 = 12","15 − 7 = 9","11 − 3 = 9","9 + 2 = 10","4 × 6 = 22",
+      "10 ÷ 2 = 6","14 ÷ 7 = 3","6 + 5 = 10","13 − 6 = 8","3 × 5 = 12"
+    ];
+
+    // ================== DOM ==================
+    const gameEl   = document.getElementById("game");
+    const bannerEl = document.getElementById("banner");
+    const playerEl = document.getElementById("player");
+
+    const gameTimeEl = document.getElementById("gameTime");
+
+    const bonusTimerEl = document.getElementById("bonusTimer");
+    const bonusSecEl   = document.getElementById("bonusSec");
+
+    const gradeText = document.getElementById("gradeText");
+    const gradeBar  = document.getElementById("gradeBar");
+    const okEl = document.getElementById("ok");
+    const badEl = document.getElementById("bad");
+    const statusEl = document.getElementById("status");
+
+    const gameOverEl = document.getElementById("gameOver");
+    const finalGradeEl = document.getElementById("finalGrade");
+    const finalBarEl = document.getElementById("finalBar");
+    const finalOkEl = document.getElementById("finalOk");
+    const finalBadEl = document.getElementById("finalBad");
+
+    const bgm  = document.getElementById("bgm");
+    const sfxOk = document.getElementById("sfxOk");
+    const sfxNo = document.getElementById("sfxNo");
+
+    const btnStart = document.getElementById("btnStart");
+    const btnPause = document.getElementById("btnPause");
+    const btnReset = document.getElementById("btnReset");
+
+    // ================== DURUM ==================
+    let running = false;
+    let lastTs = 0;
+    let spawnAcc = 0;
+
+    let grade = GRADE_START, ok = 0, bad = 0;
+    let px = 0, py = 0, vx = 0, vy = 0;
+
+    // oyun süresi sayacı
+    let gameStartTs = 0;
+    let gameEndTs = 0;
+    let lastShownGameSec = -1;
+
+    // bonus
+    let bonusActive = false;
+    let bonusUntil = 0;
+    let lastShownBonusSec = -1;
+
+    /** @type {{el:HTMLElement,x:number,y:number,w:number,h:number,speed:number,isCorrect:boolean}[]} */
+    let drops = [];
+
+    const keys = new Set();
+
+    // ================== UTIL ==================
+    const clamp = (n,a,b)=> Math.max(a, Math.min(b,n));
+    const rand  = (a,b)=> Math.random()*(b-a)+a;
+    const W = ()=> gameEl.clientWidth;
+    const H = ()=> gameEl.clientHeight;
+
+    function fmtMMSS(totalSeconds){
+      const m = Math.floor(totalSeconds / 60);
+      const s = totalSeconds % 60;
+      return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+    }
+
+    function updateReport(){
+      gradeText.textContent = String(grade);
+      gradeBar.style.width = grade + "%";
+      okEl.textContent = String(ok);
+      badEl.textContent = String(bad);
+    }
+
+    function overlap(ax,ay,aw,ah, bx,by,bw,bh){
+      return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+    }
+
+    async function playSfx(audioEl){
+      try{
+        audioEl.currentTime = 0;
+        await audioEl.play();
+      }catch(e){}
+    }
+
+    // ================== BANNER ==================
+    function showBanner(html, ms=3200){
+      bannerEl.innerHTML = html;
+      bannerEl.style.display = "block";
+      if(ms > 0){
+        setTimeout(() => { bannerEl.style.display = "none"; }, ms);
+      }
+    }
+
+    // ================== BONUS ==================
+    function startBonus(now){
+      bonusActive = true;
+      bonusUntil = now + BONUS_DURATION_MS;
+      lastShownBonusSec = -1;
+
+      gameEl.classList.add("bonus");
+
+      bonusTimerEl.style.display = "flex";
+      bonusTimerEl.classList.add("pulse");
+      bonusSecEl.textContent = "20";
+
+      showBanner(
+        `🚀 BONUS MOD AÇILDI!<small>Şimdi yakaladığın doğrular <b>iki katı puan</b> kazandıracak (20 sn)</small>`,
+        3500
+      );
+    }
+
+    function endBonus(){
+      bonusActive = false;
+      bonusUntil = 0;
+      gameEl.classList.remove("bonus");
+
+      bonusTimerEl.classList.remove("pulse");
+      bonusTimerEl.style.display = "none";
+
+      showBanner(`✅ BONUS MOD KAPANDI!<small>Normal puanlamaya geri dönüldü.</small>`, 2500);
+    }
+
+    function checkBonusTrigger(now){
+      if(!bonusActive && ok >= nextBonusAt){
+        startBonus(now);
+        nextBonusAt += nextBonusIncrement;
+        nextBonusIncrement += 5;
+      }
+    }
+
+    function updateBonusCountdown(now){
+      if(!bonusActive) return;
+      const leftMs = Math.max(0, bonusUntil - now);
+      const sec = Math.ceil(leftMs / 1000);
+
+      if(sec !== lastShownBonusSec){
+        lastShownBonusSec = sec;
+        bonusSecEl.textContent = String(sec);
+
+        // pulse'i tazele
+        bonusTimerEl.classList.remove("pulse");
+        void bonusTimerEl.offsetWidth;
+        bonusTimerEl.classList.add("pulse");
+      }
+    }
+
+    // ================== OYUN SÜRESİ ==================
+    function startGameTimer(now){
+      gameStartTs = now;
+      gameEndTs = now + GAME_DURATION_MS;
+      lastShownGameSec = -1;
+      updateGameTime(now);
+    }
+
+    function updateGameTime(now){
+      const leftMs = Math.max(0, gameEndTs - now);
+      const sec = Math.ceil(leftMs / 1000);
+
+      if(sec !== lastShownGameSec){
+        lastShownGameSec = sec;
+        gameTimeEl.textContent = "Süre: " + fmtMMSS(sec);
+      }
+    }
+
+    // ================== DROP ==================
+    function spawnDrop(){
+      const isCorrect = Math.random() < 0.5;
+      const text = isCorrect
+        ? DOGRU_ISLEMLER[Math.floor(Math.random()*DOGRU_ISLEMLER.length)]
+        : YANLIS_ISLEMLER[Math.floor(Math.random()*YANLIS_ISLEMLER.length)];
+
+      const el = document.createElement("div");
+      el.className = "drop";
+      el.textContent = text;
+      gameEl.appendChild(el);
+
+      const w = el.offsetWidth;
+      const h = el.offsetHeight;
+
+      const x = rand(10, Math.max(10, W() - w - 10));
+      const y = -h - 10;
+
+      drops.push({
+        el, x, y, w, h,
+        speed: rand(FALL_SPEED_MIN, FALL_SPEED_MAX),
+        isCorrect
+      });
+    }
+
+    function removeDrop(i){
+      drops[i].el.remove();
+      drops.splice(i, 1);
+    }
+
+    function clearDrops(){
+      for(const d of drops) d.el.remove();
+      drops = [];
+    }
+
+    // ================== INPUT ==================
+    window.addEventListener("keydown", (e)=>{
+      if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) e.preventDefault();
+      keys.add(e.key);
+    });
+    window.addEventListener("keyup", (e)=> keys.delete(e.key));
+
+    function readInput(){
+      vx = 0; vy = 0;
+      if(keys.has("ArrowLeft"))  vx -= 1;
+      if(keys.has("ArrowRight")) vx += 1;
+      if(keys.has("ArrowUp"))    vy -= 1;
+      if(keys.has("ArrowDown"))  vy += 1;
+
+      if(vx !== 0 && vy !== 0){
+        const inv = 1/Math.sqrt(2);
+        vx *= inv; vy *= inv;
+      }
+    }
+
+    // ================== OYUN BİTİR ==================
+    function endGame(){
+      running = false;
+      lastTs = 0;
+      bgm.pause();
+
+      // bonus kapat
+      if(bonusActive) endBonus();
+
+      // düşenleri temizle
+      clearDrops();
+
+      // final karne doldur
+      finalGradeEl.textContent = String(grade);
+      finalOkEl.textContent = String(ok);
+      finalBadEl.textContent = String(bad);
+      finalBarEl.style.width = grade + "%";
+
+      // overlay göster
+      gameOverEl.style.display = "flex";
+
+      statusEl.textContent = "Durum: Oyun bitti";
+    }
+
+    // ================== LOOP ==================
+    function loop(ts){
+      if(!running) return;
+
+      // oyun süresi
+      updateGameTime(ts);
+      if(ts >= gameEndTs){
+        gameTimeEl.textContent = "Süre: 00:00";
+        endGame();
+        return;
+      }
+
+      // bonus
+      updateBonusCountdown(ts);
+      if(bonusActive && ts >= bonusUntil) endBonus();
+      checkBonusTrigger(ts);
+
+      if(!lastTs) lastTs = ts;
+      const dtMs = ts - lastTs;
+      const dt = dtMs / 1000;
+      lastTs = ts;
+
+      readInput();
+
+      const pw = playerEl.offsetWidth;
+      const ph = playerEl.offsetHeight;
+
+      px = clamp(px + vx * PLAYER_SPEED * dt, 0, W() - pw);
+      py = clamp(py + vy * PLAYER_SPEED * dt, 0, H() - ph);
+
+      playerEl.style.left = px + "px";
+      playerEl.style.top  = py + "px";
+
+      // aynı anda en fazla 3 işlem
+      spawnAcc += dtMs;
+      if(drops.length < MAX_ON_SCREEN && spawnAcc >= SPAWN_EVERY_MS){
+        spawnAcc = 0;
+        spawnDrop();
+      }
+
+      for(let i = drops.length - 1; i >= 0; i--){
+        const d = drops[i];
+        d.y += d.speed * dt;
+
+        d.el.style.left = d.x + "px";
+        d.el.style.top  = d.y + "px";
+
+        if(d.y > H() + 90){
+          removeDrop(i);
+          continue;
+        }
+
+        if(overlap(px,py,pw,ph, d.x,d.y,d.w,d.h)){
+          if(d.isCorrect){
+            ok++;
+            const add = bonusActive ? (GRADE_STEP * BONUS_MULTIPLIER) : GRADE_STEP;
+            grade = clamp(grade + add, MIN_GRADE, MAX_GRADE);
+            playSfx(sfxOk);
+          } else {
+            bad++;
+            grade = clamp(grade - GRADE_STEP, MIN_GRADE, MAX_GRADE);
+            playSfx(sfxNo);
+          }
+
+          updateReport();
+          removeDrop(i);
+        }
+      }
+
+      const bonusTxt = bonusActive ? ` | BONUS: ${bonusSecEl.textContent}s` : "";
+      statusEl.textContent = `Durum: Çalışıyor | İşlem: ${drops.length}/3${bonusTxt}`;
+      requestAnimationFrame(loop);
+    }
+
+    // ================== BUTTONS ==================
+    async function start(){
+      if(running) return;
+
+      // oyun bittiyse overlayi kapat
+      gameOverEl.style.display = "none";
+
+      running = true;
+      lastTs = 0;
+      spawnAcc = 0;
+
+      // oyun süresini başlat (başlar başlamaz)
+      startGameTimer(performance.now());
+
+      statusEl.textContent = "Durum: Çalışıyor";
+
+      try{
+        bgm.volume = 0.35;
+        await bgm.play();
+      }catch(e){}
+
+      requestAnimationFrame(loop);
+    }
+
+    function pause(){
+      running = false;
+      lastTs = 0;
+      statusEl.textContent = "Durum: Duraklatıldı";
+      bgm.pause();
+    }
+
+    function reset(){
+      pause();
+      clearDrops();
+
+      grade = GRADE_START; ok = 0; bad = 0;
+      updateReport();
+
+      // bonus sıfırla
+      bonusActive = false;
+      bonusUntil = 0;
+      lastShownBonusSec = -1;
+      gameEl.classList.remove("bonus");
+      bonusTimerEl.classList.remove("pulse");
+      bonusTimerEl.style.display = "none";
+      bannerEl.style.display = "none";
+
+      nextBonusAt = 5;
+      nextBonusIncrement = 10;
+
+      // oyun süresi sıfır
+      gameStartTs = 0;
+      gameEndTs = 0;
+      lastShownGameSec = -1;
+      gameTimeEl.textContent = "Süre: 03:00";
+
+      // oyuncu
+      const pw = playerEl.offsetWidth;
+      const ph = playerEl.offsetHeight;
+      px = W()/2 - pw/2;
+      py = H() - ph - 16;
+      playerEl.style.left = px + "px";
+      playerEl.style.top  = py + "px";
+
+      bgm.currentTime = 0;
+
+      // overlay kapat
+      gameOverEl.style.display = "none";
+
+      statusEl.textContent = "Durum: Hazır";
+
+      // başlangıçta 3 işlem göster
+      for(let i=0;i<MAX_ON_SCREEN;i++) spawnDrop();
+    }
+
+    btnStart.addEventListener("click", start);
+    btnPause.addEventListener("click", pause);
+    btnReset.addEventListener("click", reset);
+
+    // İlk kurulum
+    requestAnimationFrame(() => { reset(); });
+  </script>
+</body>
+</html>
